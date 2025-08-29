@@ -123,21 +123,35 @@ boolean isExposedToWater() {
 
 /************************************************************************/
 
+void openDoor() {
+	Serial.println("Door automatically opened.");
+	myServo.write(180);  // เปิดประตู
+}
+
+void closeDoor() {
+	Serial.println("Door automatically closed.");
+	myServo.write(0);  // ปิดประตู
+}
+
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   // sensors.begin();
   pins_init();
+  closeDoor();
   
 }
 
 void loop() {
-  // float temp = readWaterTemperature();
-  // Serial.println("Water Temperature: " + String(temp));
-
-  // if(isExposedToWater()) {
-  //   Serial.println("Water detected");
-  //   soundAlarm();
-  // }
   mesureWaterLevel();
+
+  // Example of opening and closing the door every 5 seconds
+  Serial.println("Opening door...");
+  openDoor();
+  delay(5000);
+
+  Serial.println("Closing door...");
+  closeDoor();
+  delay(5000);
 }
