@@ -8,6 +8,9 @@
 #include <ArduinoJson.h>
 #include <iomanip>
 
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+
 #define ULTRA_SONIC_TRIG 18 
 #define ULTRA_SONIC_ECHO 17 
 
@@ -128,11 +131,25 @@ void testServo() {
   delay(5000);
 }
 
+void lcdSetup(){
+  lcd.init();
+  lcd.begin(16, 2);
+  lcd.backlight();
+  lcd.setCursor(0, 0); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 0 บรรทัดที่ 0
+  lcd.print("ArduinoAll TEST"); //พิมพ์ข้อความ
+  lcd.setCursor(2, 1); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 2 บรรทัดที่ 1
+  lcd.print("kjkyuyyyy");
+}
+
 void setup() {
   Serial.begin(9600);
   sensors.begin();
   pins_init();
   closeDoor();
+  LiquidCrystal_I2C lcd(0x27, 16, 2);
+  lcdSetup();
+
+  
 }
 
 void loop() {
