@@ -10,14 +10,12 @@ ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=1)
 
 #blynk = blynklib.Blynk(config.BLYNK_AUTH_TOKEN)
 
-TANK_HEIGHT = 15
 temp = 0
 volume = 0
 voltage = 0
 tds = 0
 open = False
 
-#TODO : change number to the corresponding pin
 sensorMotionPIN = 17
 sensorServoPIN = 18
 
@@ -61,7 +59,20 @@ def openTap() :
     # servo.max()
     # print("Max")
     # time.sleep(1)
-    pass
+    open = True
+
+def closeTap() :
+    open = False
+
+def updateBlynk() :
+    #water left
+    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}")
+    #water dispensing
+    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&d0={open}")
+    #water quality
+    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v1={tds}")
+    #water temp
+    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}")
 
 
 while True:
@@ -77,4 +88,6 @@ while True:
     print("water left :", volume, "%")
     print("conducting value :", voltage)
     print("TDS :", tds)
+    if(round(time.time() % 10) == 0) :
+        updateBlynk()
     time.sleep(0.5)
