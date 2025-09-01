@@ -138,14 +138,28 @@ void lcdSetup() {
   // lcd.setCursor(2, 1); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 2 บรรทัดที่ 1
 }
 
+
 void displayData(float temp, float waterLevel, float tds) {
-  String waterQuality = "Good";
+  String waterQuality;
+  if (tds <= 300) {
+    waterQuality = "Good";
+  } else if (tds <= 500) {
+    waterQuality = "Fair";
+  } else {
+    waterQuality = "Bad";
+  }
+
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.println("Water:" + String(int(waterLevel)) + "%T:" + String(int(temp)) + "C");
+  lcd.print("Lv:");
+  lcd.print(int(waterLevel));
+  lcd.print("% Tmp:");
+  lcd.print(int(temp));
+  lcd.print("C");
+
+  String row2 = "Quality:" + waterQuality;
   lcd.setCursor(0, 1);
-  lcd.println("Quality: "+ waterQuality);
-  lcd.setCursor(0, 2);
+  lcd.print(row2);
 }
 
 /**
