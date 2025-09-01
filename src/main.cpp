@@ -43,8 +43,8 @@ void readSensor(float* voltage, float* tds); // ฟังก์ชันอ่�
 /*==============================*/
 
 /* RT TX  */
-#define TxPin 22
-#define RxPin 23
+// #define TxPin 22
+// #define RxPin 23
 // SoftwareSerial anotherSerial(RxPin, TxPin);
 
 void pins_init() {
@@ -134,8 +134,18 @@ void lcdSetup() {
   lcd.begin(16, 2);
   lcd.backlight();
   lcd.setCursor(0, 0); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 0 บรรทัดที่ 0
-  lcd.print("ArduinoAll TEST"); //พิมพ์ข้อความ
-  lcd.setCursor(2, 1); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 2 บรรทัดที่ 1
+  // lcd.print(""); //พิมพ์ข้อความ
+  // lcd.setCursor(2, 1); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 2 บรรทัดที่ 1
+}
+
+void displayData(float temp, float waterLevel, float tds) {
+  String waterQuality = "Good";
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.println("Water:" + String(int(waterLevel)) + "%T:" + String(int(temp)) + "C");
+  lcd.setCursor(0, 1);
+  lcd.println("Quality: "+ waterQuality);
+  lcd.setCursor(0, 2);
 }
 
 /**
@@ -194,8 +204,6 @@ void setup() {
   pins_init();
   closeDoor();
   lcdSetup();
-
-  
 }
 
 void loop() {
@@ -218,7 +226,8 @@ void loop() {
   Serial.print(tdsValue, 0); // แสดงเป็นเลขจำนวนเต็ม
   Serial.println(" ppm");
 
-  delay(1000); // หน่วงเวลา 1 วินาทีก่อนอ่านค่าครั้งต่อไป
+  // delay(1000); // หน่วงเวลา 1 วินาทีก่อนอ่านค่าครั้งต่อไป
+  displayData(waterTemp, waterLevel, tdsValue);
 
   sensorData["temperature"] = waterTemp;
   sensorData["waterLevel"] = waterLevel;
