@@ -1,70 +1,80 @@
-import gpiod
 import blynklib
 import config
 import requests
 import serial
 import json
-import RPi.GPIO as GPIO
-from gpiozero import servo
+import time
+import gpiozero as zero
 
 ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=1)
-OBSTACLE_PIN = 'D0'
 
-blynk = blynklib.Blynk(config.BLYNK_AUTH_TOKEN)
+#blynk = blynklib.Blynk(config.BLYNK_AUTH_TOKEN)
 
 TANK_HEIGHT = 15
 temp = 0
 volume = 0
+voltage = 0
+tds = 0
 open = False
 
 #TODO : change number to the corresponding pin
-LED_PIN = 12
-sensor1_PIN = 17
-sensor2_PIN = 18
-chip = gpiod.Chip('gpiochip4')
+sensorMotionPIN = 17
+sensorServoPIN = 18
 
-led_line = chip.get_line(LED_PIN)
-motion = chip.get_line(sensor1_PIN)
-servo = chip.get_line(sensor2_PIN)
-led_line.request(consumer="LED", type=gpiod.LINE_REQ_DIR_OUT)
-motion.request(consumer="Motion", type=gpiod.LINE_REQ_DIR_IN)
-servo.request(consumer="Motor", type=gpiod.LINE_REQ_DIR_OUT)
+servo = zero.Servo(sensorServoPIN, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+motion = zero.DigitalInputDevice(sensorMotionPIN)
 
-@blynk.on("connected")
-def blynk_connected() :
-    print("Blynk is connected to raspberry pi")
 
-@blynk.on("V0")
-def v0_handler(value) :
-    print(value)
+# @blynk.handle_event("read V0")
+# def v0_handler(value) :
+#     print(value)
 
-def startSensorMotion() :
-    sensorValue = motion.get_value()
-    return (sensorValue == 0)
 
 def listenESP() :
-    line = ser.readline().decode('utf-8').strip()
-    if line:
-        try:
-            data = json.loads(line)
-            print(f"Temperature: {data['temperature']}°C, Distance: {data['distance']} cm")
-            
-        except Exception as e:
-            print("Error parsing:", line, e)
+    try :
+        line = ser.readline().decode('utf-8').strip()
+        if line:
+            try:
+                data = json.loads(line)
+                
+            except Exception as e:
+                print("Error parsing:", line, e)
 
-        else : 
-            temp = data['temperature']
-            volume = min(round((TANK_HEIGHT - data['distance'])*100/TANK_HEIGHT, 2), 100)
+            else : 
+                global temp
+                global volume
+                global voltage
+                global tds
+                temp = data['temperature']
+                volume = data['waterLevel']
+                voltage = data["voltage"]
+                tds = data["tdsValue"]
+    except : pass
 
 def openTap() :
+    # servo.min()
+    # print("Min")
+    # time.sleep(1)
+    # servo.mid()
+    # print("Mid")
+    # time.sleep(1)
+    # servo.max()
+    # print("Max")
+    # time.sleep(1)
     pass
 
-try :
-    while True :
-        blynk.run()
-        startSensorMotion()
-        listenESP()
-finally :
-    led_line.release()
-    motion.release()
-    servo.release()
+
+while True:
+
+    #blynk.run()
+    listenESP()
+    if (motion.value == 1):
+        print("Detected!!!")
+        openTap()
+    else:
+        print("Not detected...")
+    print("temp :", temp)
+    print("water left :", volume, "%")
+    print("conducting value :", voltage)
+    print("TDS :", tds)
+    time.sleep(0.5)
