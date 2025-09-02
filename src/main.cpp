@@ -17,9 +17,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 #define ULTRA_SONIC_TRIG 18 
 #define ULTRA_SONIC_ECHO 17 
 
-#define SERVO_PIN 19
-
-Servo myServo;
 
 /* ========== Temperature Measure ========== */ 
 // Data wire is plugged into pin 2 on the Arduino
@@ -52,12 +49,6 @@ void pins_init() {
   // pinMode(BUZZER, OUTPUT);
   pinMode(ULTRA_SONIC_TRIG, OUTPUT);
   pinMode(ULTRA_SONIC_ECHO, INPUT);
-
-  pinMode(SERVO_PIN, OUTPUT);
-	myServo.attach(SERVO_PIN);
-  myServo.write(90);
-
-  // pinMode(MOTION_SENSOR, INPUT);
 }
 
 void connectWifi() {
@@ -95,13 +86,13 @@ float mesureWaterLevel() {
 	delayMicroseconds(10);
 	digitalWrite(ULTRA_SONIC_TRIG, LOW);
 
-  const float EMPTY_BOTTLE_DEPTH = 14.5; // Bottle Depth When Empty 
+  const float EMPTY_BOTTLE_DEPTH = 11.51; // Bottle Depth When Empty 
 
 	// measure duration of pulse from ECHO pin
 	float duration_us = pulseIn(ULTRA_SONIC_ECHO, HIGH);
 	float distance_cm = 0.017 * duration_us; // Distance from Ultrasonic to Water Surface
 
-	Serial.println("Distance:" +  String(distance_cm) + " cm");
+	// Serial.println("Distance:" +  String(distance_cm) + " cm");
 
   float waterLevel = ( (EMPTY_BOTTLE_DEPTH - distance_cm) / EMPTY_BOTTLE_DEPTH ) * 100; // Water Level in Percent
   
@@ -110,42 +101,35 @@ float mesureWaterLevel() {
   return waterLevel;
 }
 
-void openDoor() {
-	Serial.println("Door automatically opened.");
-	myServo.write(180);  // เปิดประตู
-}
-
-void closeDoor() {
-	Serial.println("Door automatically closed.");
-	myServo.write(0);  // ปิดประตู
-}
-
-void testServo() {
-  Serial.println("Opening door...");
-  openDoor();
-  delay(5000);
-
-  Serial.println("Closing door...");
-  closeDoor();
-}
-
 void lcdSetup() {
   lcd.init();
   lcd.begin(16, 2);
   lcd.backlight();
   lcd.setCursor(0, 0); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 0 บรรทัดที่ 0
-  // lcd.print(""); //พิมพ์ข้อความ
-  // lcd.setCursor(2, 1); // กำหนดตำแหน่งเคอร์เซอร์ที่ แถวที่ 2 บรรทัดที่ 1
 }
 
+
 void displayData(float temp, float waterLevel, float tds) {
-  String waterQuality = "Good";
+  String waterQuality;
+  if (tds <= 300) {
+    waterQuality = "Good";
+  } else if (tds <= 500) {
+    waterQuality = "Fair";
+  } else {
+    waterQuality = "Bad";
+  }
+
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.println("Water:" + String(int(waterLevel)) + "%T:" + String(int(temp)) + "C");
+  lcd.print("Lv:");
+  lcd.print(int(waterLevel));
+  lcd.print("% Tmp:");
+  lcd.print(int(temp));
+  lcd.print("C");
+
+  String row2 = "Quality:" + waterQuality;
   lcd.setCursor(0, 1);
-  lcd.println("Quality: "+ waterQuality);
-  lcd.setCursor(0, 2);
+  lcd.print(row2);
 }
 
 /**
@@ -202,7 +186,6 @@ void setup() {
   Serial.begin(9600);
   sensors.begin();
   pins_init();
-  closeDoor();
   lcdSetup();
 }
 
@@ -219,14 +202,13 @@ void loop() {
   readSensor(&voltageValue, &tdsValue); // เรียกฟังก์ชันเพื่ออ่านค่าจากเซ็นเซอร์
 
   // แสดงผลลัพธ์ออกทาง Serial Monitor
-  Serial.print("Voltage: ");
-  Serial.print(voltageValue, 2); // แสดงทศนิยม 2 ตำแหน่ง
-  Serial.print("V   ");
-  Serial.print("TDS: ");
-  Serial.print(tdsValue, 0); // แสดงเป็นเลขจำนวนเต็ม
-  Serial.println(" ppm");
+  // Serial.print("Voltage: ");
+  // Serial.print(voltageValue, 2); // แสดงทศนิยม 2 ตำแหน่ง
+  // Serial.print("V   ");
+  // Serial.print("TDS: ");
+  // Serial.print(tdsValue, 0); // แสดงเป็นเลขจำนวนเต็ม
+  // Serial.println(" ppm");
 
-  // delay(1000); // หน่วงเวลา 1 วินาทีก่อนอ่านค่าครั้งต่อไป
   displayData(waterTemp, waterLevel, tdsValue);
 
   sensorData["temperature"] = waterTemp;
@@ -237,8 +219,5 @@ void loop() {
   // Send JSON over serial
   serializeJson(sensorData, Serial);
   Serial.println();
-
-  // Example of opening and closing the door every 5 seconds
-  // testServo();
   delay(1000);
 }
