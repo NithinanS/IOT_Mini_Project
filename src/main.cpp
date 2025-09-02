@@ -45,8 +45,6 @@ void readSensor(float* voltage, float* tds); // ฟังก์ชันอ่�
 // SoftwareSerial anotherSerial(RxPin, TxPin);
 
 void pins_init() {
-  // pinMode(WATER_SENSOR, INPUT);
-  // pinMode(BUZZER, OUTPUT);
   pinMode(ULTRA_SONIC_TRIG, OUTPUT);
   pinMode(ULTRA_SONIC_ECHO, INPUT);
 }
@@ -91,10 +89,13 @@ float mesureWaterLevel() {
 	// measure duration of pulse from ECHO pin
 	float duration_us = pulseIn(ULTRA_SONIC_ECHO, HIGH);
 	float distance_cm = 0.017 * duration_us; // Distance from Ultrasonic to Water Surface
-
 	// Serial.println("Distance:" +  String(distance_cm) + " cm");
 
   float waterLevel = ( (EMPTY_BOTTLE_DEPTH - distance_cm) / EMPTY_BOTTLE_DEPTH ) * 100; // Water Level in Percent
+
+  if (abs(distance_cm - EMPTY_BOTTLE_DEPTH) < 0.01) {
+    waterLevel = 0;
+  }
   
   waterLevel = roundf(waterLevel * 100) / 100.0;   // Round to 2 decimal places
 
