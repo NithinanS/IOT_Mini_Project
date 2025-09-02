@@ -20,7 +20,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 /* ========== Temperature Measure ========== */ 
 // Data wire is plugged into pin 2 on the Arduino
-#define ONE_WIRE_BUS 5 // Temperature sensors
+#define ONE_WIRE_BUS 4 // Temperature sensors
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -29,7 +29,7 @@ DallasTemperature sensors(&oneWire);
 
 /*========== TDS Sensor ==========*/
 // --- ค่าคงที่และการตั้งค่า ---
-#define TdsSensorPin 34      // กำหนดขาเซ็นเซอร์ TDS คือ GPIO34 (ขา VP บนบอร์ด)
+#define TdsSensorPin 34      // กำหนดขาเซ็นเซอร์ TDS คือ GPIO34
 #define VREF 3.3             // แรงดันอ้างอิงของ ESP32 คือ 3.3V
 #define SCOUNT 30            // จำนวนครั้งในการอ่านค่าเพื่อหาค่ามัธยฐาน (เพื่อความแม่นยำ)
 
