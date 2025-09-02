@@ -1,5 +1,3 @@
-import blynklib
-import config
 import requests
 import serial
 import json
@@ -15,17 +13,17 @@ volume = 0
 voltage = 0
 tds = 0
 open = False
+reported_temp = 0
+reported_volume = 0
+reported_voltage = 0
+reported_tds = 0
+opened = False
 
 sensorMotionPIN = 17
-sensorServoPIN = 18
+sensorServoPIN = 27
 
 servo = zero.Servo(sensorServoPIN, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 motion = zero.DigitalInputDevice(sensorMotionPIN)
-
-
-# @blynk.handle_event("read V0")
-# def v0_handler(value) :
-#     print(value)
 
 
 def listenESP() :
@@ -50,29 +48,32 @@ def listenESP() :
     except : pass
 
 def openTap() :
-    # servo.min()
-    # print("Min")
-    # time.sleep(1)
-    # servo.mid()
-    # print("Mid")
-    # time.sleep(1)
-    # servo.max()
-    # print("Max")
-    # time.sleep(1)
+    global open
+    servo.max()
     open = True
 
 def closeTap() :
+    global open
+    servo.min()
     open = False
 
 def updateBlynk() :
     #water left
-    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}")
+    if(round(volume) != round(reported_volume)) :
+        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}")
+        reported_volume = volume
     #water dispensing
-    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&d0={open}")
+    if(open != opened) :
+        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&d0={open}")
+        opened = open
     #water quality
-    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v1={tds}")
+    if(round(tds) != round(reported_tds)) :
+        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v1={tds}")
+        reported_tds = tds
     #water temp
-    requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}")
+    if(round(temp,1) != round(reported_temp,1)) :
+        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}")
+        reported_temp = temp
 
 
 while True:
@@ -84,10 +85,11 @@ while True:
         openTap()
     else:
         print("Not detected...")
+        closeTap()
     print("temp :", temp)
     print("water left :", volume, "%")
     print("conducting value :", voltage)
     print("TDS :", tds)
-    if(round(time.time() % 10) == 0) :
+    if(round(time.time() % 5) == 0) :
         updateBlynk()
     time.sleep(0.5)
