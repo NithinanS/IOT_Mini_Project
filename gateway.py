@@ -49,16 +49,22 @@ def listenESP() :
 
 def openTap() :
     global open
-    servo.max()
+    servo.mid()
     open = True
 
 def closeTap() :
     global open
-    servo.min()
+    servo.max()
     open = False
 
 def updateBlynk() :
     #water left
+    global reported_volume
+    global reported_voltage
+    global reported_tds
+    global reported_temp
+    global opened
+
     if(round(volume) != round(reported_volume)) :
         requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}")
         reported_volume = volume
@@ -75,6 +81,9 @@ def updateBlynk() :
         requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}")
         reported_temp = temp
 
+# max = ล่าง
+# min = บน
+servo.max() # set default servo postion to lower
 
 while True:
 
