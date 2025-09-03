@@ -3,6 +3,8 @@ import serial
 import json
 import time
 import gpiozero as zero
+import aiohttp
+import asyncio
 
 ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=1)
 
@@ -57,33 +59,31 @@ def closeTap() :
     servo.max()
     open = False
 
-def updateBlynk() :
-    #water left
-    global reported_volume
-    global reported_voltage
-    global reported_tds
-    global reported_temp
-    global opened
+async def updateBlynk():
+    global reported_volume, reported_voltage, reported_tds, reported_temp, opened
 
-    if(round(volume) != round(reported_volume)) :
-        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}")
-        reported_volume = volume
-    #water dispensing
-    if(open != opened) :
-        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&d0={open}")
-        opened = open
-    #water quality
-    if(round(tds) != round(reported_tds)) :
-        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v1={tds}")
-        reported_tds = tds
-    #water temp
-    if(round(temp,1) != round(reported_temp,1)) :
-        requests.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}")
-        reported_temp = temp
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        if round(volume) != round(reported_volume):
+            tasks.append(session.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v0={volume}"))
+            reported_volume = volume
+        if open != opened:
+            tasks.append(session.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&d0={open}"))
+            opened = open
+        if round(tds) != round(reported_tds):
+            tasks.append(session.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v1={tds}"))
+            reported_tds = tds
+        if round(temp,1) != round(reported_temp,1):
+            tasks.append(session.get(f"https://sgp1.blynk.cloud/external/api/update?token=jRqpqDZlUCBdlLsynkT_ENtKSx38b4bA&v2={temp}"))
+            reported_temp = temp
+        if tasks:
+            await asyncio.gather(*tasks)
 
 # max = ล่าง
 # min = บน
 servo.max() # set default servo postion to lower
+
+last_update = 0
 
 while True:
 
@@ -99,6 +99,8 @@ while True:
     print("water left :", volume, "%")
     print("conducting value :", voltage)
     print("TDS :", tds)
-    if(round(time.time() % 5) == 0) :
-        updateBlynk()
+    now = int(time.time())
+    if now % 5 == 0 and now != last_update:
+        asyncio.run(updateBlynk())
+        last_update = now
     time.sleep(0.5)
